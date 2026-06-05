@@ -1,0 +1,452 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+
+  .root { padding: 1.5rem; }
+
+  .app-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 2rem; padding-bottom: 1rem;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .app-title { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 300; color: var(--color-text-primary); line-height: 1.1; }
+  .app-title em { font-style: italic; color: #3B6D11; }
+  .app-subtitle { font-size: 12px; color: var(--color-text-secondary); margin-top: 4px; font-family: 'DM Mono', monospace; letter-spacing: 0.04em; }
+  .badge-live { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-family: 'DM Mono', monospace; padding: 4px 10px; border-radius: 20px; background: #EAF3DE; color: #3B6D11; border: 0.5px solid #97C459; }
+  .badge-live::before { content:''; width:6px; height:6px; border-radius:50%; background:#3B6D11; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+  .grid-top { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .metric-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px 16px; }
+  .metric-label { font-size: 11px; color: var(--color-text-secondary); font-family: 'DM Mono', monospace; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; }
+  .metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); line-height: 1; }
+  .metric-delta { font-size: 11px; margin-top: 4px; font-family: 'DM Mono', monospace; }
+  .up { color: #3B6D11; } .down { color: #A32D2D; } .neutral { color: var(--color-text-secondary); }
+
+  .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+  .panel { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; }
+  .panel-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 1rem; font-family: 'DM Mono', monospace; letter-spacing: 0.03em; }
+  .panel-subtitle { font-size: 11px; color: var(--color-text-secondary); margin-top: -0.8rem; margin-bottom: 1rem; }
+
+  .bottom-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+  .ctrl-row { display: flex; flex-direction: column; gap: 10px; }
+  .ctrl { display: grid; grid-template-columns: 90px 1fr 42px; align-items: center; gap: 8px; }
+  .ctrl-label { font-size: 11px; color: var(--color-text-secondary); font-family: 'DM Mono', monospace; }
+  .ctrl input[type=range] { width: 100%; }
+  .ctrl-val { font-size: 12px; font-weight: 500; color: var(--color-text-primary); text-align: right; font-family: 'DM Mono', monospace; }
+
+  .crop-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 1rem; }
+  .crop-btn { border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; cursor: pointer; font-size: 12px; color: var(--color-text-secondary); text-align: center; transition: all 0.15s; }
+  .crop-btn:hover { border-color: var(--color-border-secondary); color: var(--color-text-primary); }
+  .crop-btn.active { background: #EAF3DE; border-color: #97C459; color: #27500A; font-weight: 500; }
+
+  .predict-btn { width: 100%; padding: 10px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); border-radius: var(--border-radius-md); cursor: pointer; font-size: 13px; font-weight: 500; margin-top: 1rem; transition: all 0.15s; }
+  .predict-btn:hover { background: var(--color-background-secondary); }
+  .predict-btn:active { transform: scale(0.98); }
+
+  .result-box { background: #EAF3DE; border: 0.5px solid #97C459; border-radius: var(--border-radius-lg); padding: 1rem; margin-top: 1rem; }
+  .result-label { font-size: 11px; color: #3B6D11; font-family: 'DM Mono', monospace; margin-bottom: 4px; letter-spacing: 0.05em; }
+  .result-value { font-size: 28px; font-weight: 500; color: #174004; line-height: 1; font-family: 'Fraunces', serif; }
+  .result-unit { font-size: 13px; color: #3B6D11; margin-top: 2px; }
+  .confidence-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .confidence-label { font-size: 11px; color: #3B6D11; font-family: 'DM Mono', monospace; }
+  .conf-bar-bg { flex: 1; height: 4px; background: #C0DD97; border-radius: 2px; }
+  .conf-bar { height: 4px; background: #3B6D11; border-radius: 2px; transition: width 0.5s; }
+  .conf-pct { font-size: 11px; color: #27500A; font-family: 'DM Mono', monospace; font-weight: 500; }
+
+  .feature-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .feature-row:last-child { border-bottom: none; }
+  .feature-name { font-size: 12px; color: var(--color-text-secondary); }
+  .feature-bar-wrap { display: flex; align-items: center; gap: 6px; }
+  .feature-bar-bg { width: 80px; height: 4px; background: var(--color-background-secondary); border-radius: 2px; }
+  .feature-bar-fill { height: 4px; border-radius: 2px; }
+  .feature-pct { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--color-text-secondary); width: 30px; text-align: right; }
+
+  .soil-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .soil-cell { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px; }
+  .soil-key { font-size: 11px; color: var(--color-text-secondary); font-family: 'DM Mono', monospace; margin-bottom: 3px; }
+  .soil-val { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+
+  .season-toggle { display: flex; gap: 4px; margin-bottom: 1rem; }
+  .season-btn { flex: 1; font-size: 11px; padding: 5px 4px; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-secondary); text-align: center; transition: all 0.15s; font-family: 'DM Mono', monospace; }
+  .season-btn.active { background: #E6F1FB; border-color: #85B7EB; color: #0C447C; }
+
+  .history-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+  .history-year { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--color-text-secondary); width: 36px; }
+  .history-bar-bg { flex: 1; height: 12px; background: var(--color-background-secondary); border-radius: 2px; overflow: hidden; }
+  .history-bar { height: 12px; border-radius: 2px; transition: width 0.6s; }
+  .history-val { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--color-text-secondary); width: 42px; text-align: right; }
+
+  .algo-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .algo-row:last-child { border-bottom: none; }
+  .algo-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .algo-name { font-size: 12px; color: var(--color-text-primary); flex: 1; }
+  .algo-acc { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--color-text-secondary); }
+  .algo-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: #EAF3DE; color: #27500A; font-family: 'DM Mono', monospace; }
+
+  .divider { width: 100%; height: 0.5px; background: var(--color-border-tertiary); margin: 0.5rem 0; }
+  .footnote { font-size: 11px; color: var(--color-text-secondary); font-family: 'DM Mono', monospace; margin-top: 1.5rem; padding-top: 0.75rem; border-top: 0.5px solid var(--color-border-tertiary); }
+
+  @media (max-width: 700px) {
+    .grid-top { grid-template-columns: repeat(2, 1fr); }
+    .main-grid { grid-template-columns: 1fr; }
+    .bottom-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="root">
+
+  <div class="app-header">
+    <div>
+      <div class="app-title"><em>CropCast</em> — Predictive Yield Intelligence</div>
+      <div class="app-subtitle">Linear Regression · Precision Agriculture · India</div>
+    </div>
+    <div class="badge-live">Model Active</div>
+  </div>
+
+  <div class="grid-top">
+    <div class="metric-card">
+      <div class="metric-label">Predicted Yield</div>
+      <div class="metric-value" id="m-yield">3.84</div>
+      <div class="metric-delta up" id="m-yield-d">↑ +0.31 t/ha vs last yr</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Model Accuracy</div>
+      <div class="metric-value" id="m-acc">88.4%</div>
+      <div class="metric-delta neutral">R² = 0.91</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Risk Index</div>
+      <div class="metric-value" id="m-risk">Low</div>
+      <div class="metric-delta up" id="m-risk-d">Drought risk: 14%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Water Requirement</div>
+      <div class="metric-value" id="m-water">620</div>
+      <div class="metric-delta neutral">mm / season</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+
+    <div class="panel">
+      <div class="panel-title">Yield Forecast — Historical + Prediction</div>
+      <div class="panel-subtitle">Tonnes per hectare · 2015–2025 actual, 2026 forecast</div>
+      <div style="position:relative; width:100%; height:240px;">
+        <canvas id="yieldChart"></canvas>
+      </div>
+      <div style="display:flex; gap:16px; margin-top:8px;">
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-secondary);font-family:'DM Mono',monospace;">
+          <span style="width:10px;height:2px;background:#639922;display:inline-block;border-radius:1px;"></span>Actual
+        </span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-secondary);font-family:'DM Mono',monospace;">
+          <span style="width:10px;height:2px;background:#185FA5;display:inline-block;border-radius:1px;border:1px dashed #185FA5;"></span>Predicted
+        </span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-secondary);font-family:'DM Mono',monospace;">
+          <span style="width:10px;height:4px;background:#B5D4F4;display:inline-block;border-radius:1px;opacity:0.5;"></span>Confidence interval
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Prediction Engine</div>
+      <div class="crop-selector">
+        <div class="crop-btn active" onclick="selectCrop(this,'Wheat')">🌾 Wheat</div>
+        <div class="crop-btn" onclick="selectCrop(this,'Rice')">🌾 Rice</div>
+        <div class="crop-btn" onclick="selectCrop(this,'Maize')">🌽 Maize</div>
+        <div class="crop-btn" onclick="selectCrop(this,'Soybean')">🫘 Soybean</div>
+      </div>
+      <div class="season-toggle">
+        <div class="season-btn active" onclick="setSeason(this,'Kharif')">Kharif</div>
+        <div class="season-btn" onclick="setSeason(this,'Rabi')">Rabi</div>
+        <div class="season-btn" onclick="setSeason(this,'Zaid')">Zaid</div>
+      </div>
+      <div class="ctrl-row">
+        <div class="ctrl">
+          <span class="ctrl-label">Rainfall</span>
+          <input type="range" min="200" max="1200" value="620" step="10" id="sl-rain" oninput="updatePred()">
+          <span class="ctrl-val" id="vl-rain">620mm</span>
+        </div>
+        <div class="ctrl">
+          <span class="ctrl-label">Temperature</span>
+          <input type="range" min="15" max="42" value="27" step="0.5" id="sl-temp" oninput="updatePred()">
+          <span class="ctrl-val" id="vl-temp">27°C</span>
+        </div>
+        <div class="ctrl">
+          <span class="ctrl-label">Humidity</span>
+          <input type="range" min="30" max="95" value="65" step="1" id="sl-hum" oninput="updatePred()">
+          <span class="ctrl-val" id="vl-hum">65%</span>
+        </div>
+        <div class="ctrl">
+          <span class="ctrl-label">Soil N (mg/kg)</span>
+          <input type="range" min="50" max="300" value="160" step="5" id="sl-n" oninput="updatePred()">
+          <span class="ctrl-val" id="vl-n">160</span>
+        </div>
+        <div class="ctrl">
+          <span class="ctrl-label">Fertilizer kg</span>
+          <input type="range" min="20" max="200" value="90" step="5" id="sl-fert" oninput="updatePred()">
+          <span class="ctrl-val" id="vl-fert">90kg</span>
+        </div>
+      </div>
+      <div class="result-box" id="result-box">
+        <div class="result-label">PREDICTED YIELD</div>
+        <div class="result-value" id="pred-yield">3.84</div>
+        <div class="result-unit" id="pred-unit">tonnes / hectare — Wheat · Kharif</div>
+        <div class="confidence-row">
+          <span class="confidence-label">Confidence</span>
+          <div class="conf-bar-bg"><div class="conf-bar" id="conf-bar" style="width:84%;"></div></div>
+          <span class="conf-pct" id="conf-pct">84%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-grid">
+
+    <div class="panel">
+      <div class="panel-title">Feature Importance</div>
+      <div class="panel-subtitle">Linear regression coefficients (normalised)</div>
+      <div id="feature-list"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Historical Yield Trend</div>
+      <div class="panel-subtitle">5-year district average · t/ha</div>
+      <div id="history-list"></div>
+      <div class="divider"></div>
+      <div class="soil-grid">
+        <div class="soil-cell"><div class="soil-key">pH</div><div class="soil-val" id="s-ph">6.8</div></div>
+        <div class="soil-cell"><div class="soil-key">Organic C%</div><div class="soil-val" id="s-oc">1.24</div></div>
+        <div class="soil-cell"><div class="soil-key">Phosphorus</div><div class="soil-val" id="s-p">18 ppm</div></div>
+        <div class="soil-cell"><div class="soil-key">Potassium</div><div class="soil-val" id="s-k">142 ppm</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Algorithm Comparison</div>
+      <div class="panel-subtitle">R² accuracy across models</div>
+      <div>
+        <div class="algo-row">
+          <div class="algo-dot" style="background:#3B6D11;"></div>
+          <span class="algo-name">Linear Regression</span>
+          <span class="algo-acc">91.0%</span>
+          <span class="algo-badge">Active</span>
+        </div>
+        <div class="algo-row">
+          <div class="algo-dot" style="background:#185FA5;"></div>
+          <span class="algo-name">Random Forest</span>
+          <span class="algo-acc">94.3%</span>
+        </div>
+        <div class="algo-row">
+          <div class="algo-dot" style="background:#BA7517;"></div>
+          <span class="algo-name">Gradient Boost</span>
+          <span class="algo-acc">93.1%</span>
+        </div>
+        <div class="algo-row">
+          <div class="algo-dot" style="background:#993556;"></div>
+          <span class="algo-name">ZeroR (Baseline)</span>
+          <span class="algo-acc">62.5%</span>
+        </div>
+        <div class="algo-row">
+          <div class="algo-dot" style="background:#534AB7;"></div>
+          <span class="algo-name">Decision Tree</span>
+          <span class="algo-acc">87.6%</span>
+        </div>
+        <div class="algo-row">
+          <div class="algo-dot" style="background:#888780;"></div>
+          <span class="algo-name">SVR</span>
+          <span class="algo-acc">89.2%</span>
+        </div>
+      </div>
+      <button class="predict-btn" onclick="sendPrompt('Can you explain how to implement the linear regression crop prediction model in Python with scikit-learn, and how to tune it for better accuracy?')">Explore implementation ↗</button>
+    </div>
+
+  </div>
+
+  <div class="footnote">
+    Dataset: 12 years · 9 districts · 4 crop types · 18 features · 2,160 observations &nbsp;|&nbsp; Weka + Python scikit-learn pipeline &nbsp;|&nbsp; Precision Agriculture, Punjab & Haryana
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let currentCrop = 'Wheat';
+let currentSeason = 'Kharif';
+
+const cropParams = {
+  Wheat:   { base:3.2, rainW:0.0015, tempOpt:22, tempW:-0.04, humW:0.012, nW:0.005, fertW:0.008, water:500, color:'#639922', season:'Rabi' },
+  Rice:    { base:2.8, rainW:0.002,  tempOpt:30, tempW:-0.03, humW:0.018, nW:0.006, fertW:0.007, water:900, color:'#185FA5', season:'Kharif' },
+  Maize:   { base:3.5, rainW:0.001,  tempOpt:28, tempW:-0.035,humW:0.010, nW:0.007, fertW:0.009, water:600, color:'#BA7517', season:'Kharif' },
+  Soybean: { base:1.8, rainW:0.0012, tempOpt:26, tempW:-0.03, humW:0.015, nW:0.004, fertW:0.006, water:550, color:'#534AB7', season:'Kharif' }
+};
+
+const historyData = {
+  Wheat:   [3.10,3.25,3.40,3.55,3.53],
+  Rice:    [3.30,3.45,3.60,3.75,3.80],
+  Maize:   [3.60,3.75,3.90,4.10,4.25],
+  Soybean: [1.60,1.70,1.82,1.90,1.95]
+};
+
+const years = ['2021','2022','2023','2024','2025'];
+
+const features = [
+  { name: 'Rainfall',        pct: 28, color: '#639922' },
+  { name: 'Temperature',     pct: 22, color: '#185FA5' },
+  { name: 'Soil Nitrogen',   pct: 18, color: '#BA7517' },
+  { name: 'Fertilizer use',  pct: 14, color: '#534AB7' },
+  { name: 'Humidity',        pct: 10, color: '#993556' },
+  { name: 'Soil pH',         pct:  8, color: '#888780' },
+];
+
+function renderFeatures() {
+  const el = document.getElementById('feature-list');
+  el.innerHTML = features.map(f => `
+    <div class="feature-row">
+      <span class="feature-name">${f.name}</span>
+      <div class="feature-bar-wrap">
+        <div class="feature-bar-bg">
+          <div class="feature-bar-fill" style="width:${f.pct*3.2}px;background:${f.color};height:4px;border-radius:2px;"></div>
+        </div>
+        <span class="feature-pct">${f.pct}%</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderHistory() {
+  const data = historyData[currentCrop];
+  const max = Math.max(...data);
+  const el = document.getElementById('history-list');
+  el.innerHTML = data.map((v,i) => `
+    <div class="history-row">
+      <span class="history-year">${years[i]}</span>
+      <div class="history-bar-bg">
+        <div class="history-bar" style="width:${Math.round(v/max*100)}%;background:${cropParams[currentCrop].color};"></div>
+      </div>
+      <span class="history-val">${v.toFixed(2)} t</span>
+    </div>`).join('');
+}
+
+function calcYield() {
+  const p = cropParams[currentCrop];
+  const rain = +document.getElementById('sl-rain').value;
+  const temp = +document.getElementById('sl-temp').value;
+  const hum  = +document.getElementById('sl-hum').value;
+  const n    = +document.getElementById('sl-n').value;
+  const fert = +document.getElementById('sl-fert').value;
+  let y = p.base
+    + p.rainW  * (rain - 600)
+    + p.tempW  * Math.pow(temp - p.tempOpt, 2)
+    + p.humW   * (hum - 60)
+    + p.nW     * (n - 150)
+    + p.fertW  * (fert - 80);
+  y = Math.max(0.5, Math.min(8, y));
+  return Math.round(y * 100) / 100;
+}
+
+function calcConfidence() {
+  const rain = +document.getElementById('sl-rain').value;
+  const temp = +document.getElementById('sl-temp').value;
+  const hum  = +document.getElementById('sl-hum').value;
+  const p = cropParams[currentCrop];
+  const rainOk = rain > 300 && rain < 1000 ? 1 : 0.7;
+  const tempOk = Math.abs(temp - p.tempOpt) < 8 ? 1 : 0.75;
+  const humOk  = hum > 40 && hum < 85 ? 1 : 0.8;
+  return Math.round(rainOk * tempOk * humOk * 92);
+}
+
+function updatePred() {
+  const rain = document.getElementById('sl-rain').value;
+  const temp = document.getElementById('sl-temp').value;
+  const hum  = document.getElementById('sl-hum').value;
+  const n    = document.getElementById('sl-n').value;
+  const fert = document.getElementById('sl-fert').value;
+  document.getElementById('vl-rain').textContent = rain + 'mm';
+  document.getElementById('vl-temp').textContent = temp + '°C';
+  document.getElementById('vl-hum').textContent  = hum + '%';
+  document.getElementById('vl-n').textContent    = n;
+  document.getElementById('vl-fert').textContent = fert + 'kg';
+
+  const y = calcYield();
+  const conf = calcConfidence();
+  document.getElementById('pred-yield').textContent = y.toFixed(2);
+  document.getElementById('pred-unit').textContent  = `tonnes / hectare — ${currentCrop} · ${currentSeason}`;
+  document.getElementById('conf-bar').style.width = conf + '%';
+  document.getElementById('conf-pct').textContent = conf + '%';
+  document.getElementById('m-yield').textContent = y.toFixed(2);
+  document.getElementById('m-water').textContent = cropParams[currentCrop].water;
+
+  const risk = conf > 80 ? 'Low' : conf > 65 ? 'Medium' : 'High';
+  document.getElementById('m-risk').textContent = risk;
+  document.getElementById('m-risk').style.color = risk === 'Low' ? '#3B6D11' : risk === 'Medium' ? '#BA7517' : '#A32D2D';
+
+  updateChart(y);
+  renderHistory();
+}
+
+function selectCrop(btn, crop) {
+  document.querySelectorAll('.crop-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCrop = crop;
+  updatePred();
+}
+
+function setSeason(btn, season) {
+  document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSeason = season;
+  updatePred();
+}
+
+let yieldChart;
+function initChart() {
+  const hist = historyData[currentCrop];
+  const predY = calcYield();
+  const allYears = ['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025','2026'];
+  const actuals = [2.5, 2.65, 2.8, 2.9, 3.0, 3.1, ...hist, null];
+  const preds   = [null,null,null,null,null,null,null,null,null,null,null, predY];
+  const upper   = actuals.map((v,i) => i === allYears.length-1 ? predY + 0.3 : null);
+  const lower   = actuals.map((v,i) => i === allYears.length-1 ? predY - 0.3 : null);
+
+  const ctx = document.getElementById('yieldChart').getContext('2d');
+  yieldChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: allYears,
+      datasets: [
+        { label:'Actual', data: actuals, borderColor:'#639922', backgroundColor:'transparent', tension:0.35, pointRadius:3, pointBackgroundColor:'#639922', borderWidth:2 },
+        { label:'Predicted', data: preds, borderColor:'#185FA5', backgroundColor:'transparent', tension:0.3, pointRadius:5, pointBackgroundColor:'#185FA5', borderWidth:2, borderDash:[5,3] },
+        { label:'Upper CI', data: upper, borderColor:'transparent', backgroundColor:'rgba(56,138,221,0.12)', fill:'+1', pointRadius:0 },
+        { label:'Lower CI', data: lower, borderColor:'transparent', backgroundColor:'rgba(56,138,221,0.12)', fill:false, pointRadius:0 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { font: { family: 'DM Mono', size: 10 }, color:'#888' } },
+        y: { grid: { color: 'rgba(128,128,128,0.1)' }, ticks: { font: { family: 'DM Mono', size: 10 }, color:'#888', callback: v => v.toFixed(1) + 't' } }
+      }
+    }
+  });
+}
+
+function updateChart(predY) {
+  if (!yieldChart) return;
+  const hist = historyData[currentCrop];
+  const actuals = [2.5, 2.65, 2.8, 2.9, 3.0, 3.1, ...hist, null];
+  const preds = [null,null,null,null,null,null,null,null,null,null,null, predY];
+  yieldChart.data.datasets[0].data = actuals;
+  yieldChart.data.datasets[1].data = preds;
+  yieldChart.data.datasets[1].borderColor = cropParams[currentCrop].color;
+  yieldChart.data.datasets[1].pointBackgroundColor = cropParams[currentCrop].color;
+  yieldChart.update();
+}
+
+renderFeatures();
+renderHistory();
+initChart();
+</script>
